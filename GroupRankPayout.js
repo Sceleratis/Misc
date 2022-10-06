@@ -104,6 +104,8 @@ getUsers(function(users){
         
         for (i in eligibleUsers) {
             var user = eligibleUsers[i];
+          
+            // Prompt us to send the payout to this user (disable/remove this if-else statement if you want to make this fully automatic)
             if (confirm(`Payout ${amount} to ${user.username} (${user.userId})?`)) {
                 console.log("PAYOUT USER", user);
                 performPayout(user, amount);
