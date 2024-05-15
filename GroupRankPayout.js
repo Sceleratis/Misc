@@ -1,21 +1,42 @@
 /*
   Performs a fixed amount group payout to all users in a specified group rank. 
   
-  Will take the funds_to_use number you specify (that is, the total amount of Robux that should be taken from the group funds) and will divide it
+  This will take the funds_to_use value you specify (that is, the total amount of Robux that should be taken from the group funds) and will divide it
   equally among all eligible users in the specified group rank. 
   
-  For each user, you will be prompted to confirm the payout with a simple OK/Cancel prompt. If you want this to be fully automatated simply replace the if (confirm()) line with if (true) or remove that if statement entirely. Up to you.
+  For each user, you will be prompted to confirm the payout with a simple OK/Cancel prompt. 
+  If you want this to be fully automatated simply set full_auto to true.
   
   This will not check your group funds before performing payouts, so make sure you actually have enough to cover it or it's just going to drain everything then error once empty. 
-  Also note that the amount per user will be floored as you cannot payout fractions of Robux, so the actual total amount paid out may be less than what was specified.
+  Also note that the amount per user will be floored as you cannot payout fractions of Robux, so the actual total amount paid out may be slightly less than what was specified
+  depending on the amount and number of users to divide it by.
+  
   How to use:
-  Simply login to your Roblox account, open up the developer console in whatever browser you're using (usually can be done by pressing F12)
-  and paste the contents of this script into the console after making any necessary config edits and press enter.
-  If all goes well it should output a bunch of info like eligibilty checks, then will start prompting you to confirm payouts. 
-  All you have to do from there is click OK for each user.
+  - Login to Roblox (obviously.)
+  - Navigate to your group payout page you want to perform a mass payout for.
+  - Find the ID of the role you want to payout to (how you do this is up to you, 
+    I personally just looked at the network log while loading users in the target role on the members page to grab the parameters it used for the request.
+  - If you have an account pin or 2FA, submit a payout to yourself of 1 Robux. 
+    It should prompt you to verify via your 2FA code or account pin. If you don't do this step, this script will not work as the requests will be rejected until you verify once.
+    After you do this verification step once, it shouldn't bother you again for a while which should be enough time to run this.
+  - Open up the developer console in whatever browser you're using (almost always can be done by pressing F12.)
+  - Paste the contents of this script into the console after making any necessary config edits.
+  - Press enter to run it. Monitor the console/look for prompts to track progress or approve payouts.
+    DO NOT CLOSE/LEAVE THE TAB/BROWSER WHILE THIS IS RUNNING! DOING SO WILL CAUSE IT TO STOP PREMATURELY!
+    
+  If all goes well it should output a bunch of info like eligibilty checks and used to perform payouts to. 
+  It will start prompting you to confirm payouts. All you have to do from there is click OK for each user. 
+  Dismissing the popup for a given user or payout will cause that user to be ignored or that payout to be aborted.
+
+  Also, as always, never trust random code you find on the internet... 
+  Especially if the instructions for it tell you to run it in your browser while logged in on a secure page.
+  Be sure to practice your due diligence and skim through this and any other bits of code before you run it.
+  While I'd note this is pretty simple and short, and has nothing unscrupulous in it, you shouldn't blindly
+  take my word for it and should always verify things for yourself before running them. 😊
 */
 
 // Configuration options
+let full_auto = false;       // Set this to true if you do not want to be prompted to confirm users or payouts and just want it to run automatically.
 let funds_to_use = 100000;   // The total amount of funds to divide among eligible users in the specified group role.
 let group = 1234567;         // The ID of your group.
 let role = 8901234;          // Note: this is the actual role ID (I yoinked mine from the request to get members in a rank) and is NOT the same as the rank number you set in the group settings.
@@ -110,7 +131,7 @@ function performMultiPayout(recipients, amount) {
        repStr += recipients[i].recipientId+","; 
     }
 
-    if (confirm("Perform payout for "+repStr))
+    if (full_auto || confirm("Perform payout for "+repStr))
     {
         $.ajax({
             url: `https://groups.roblox.com/v1/groups/${group}/payouts`,
@@ -148,6 +169,7 @@ function doChunks(chunks, amount, chunkNum) {
     else
     {
         console.log("MASS PAYOUT COMPLETE.");
+        //message("MASS PAYOUT COMPLETE.");
     }
 }
 
@@ -168,7 +190,7 @@ getUsers(function(users){
             var user = eligibleUsers[i];
           
             // Prompt us to send the payout to this user (disable/remove this if-else statement if you want to make this fully automatic)
-            if (ignoreUser(user.username, user.userId) == false && confirm(`Payout ${amount} to ${user.username} (${user.userId})?`)) {
+            if (ignoreUser(user.username, user.userId) == false && (full_auto || confirm(`Payout ${amount} to ${user.username} (${user.userId})?`))) { 
                 console.log("PAYOUT USER", user, i);
                 //performPayout(user, amount);
 
